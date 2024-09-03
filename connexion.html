@@ -81,14 +81,15 @@
 
         document.getElementById('google-signin').addEventListener('click', () => {
             const provider = new firebase.auth.GoogleAuthProvider();
-            auth.signInWithPopup(provider)
-                .then((result) => {
-                    const user = result.user;
-                    checkUserExists(user);
-                })
-                .catch((error) => {
-                    console.error("Error during Google Sign-In:", error);
-                });
+            auth.signInWithRedirect(provider);
+        });
+
+        auth.getRedirectResult().then((result) => {
+            if (result.user) {
+                checkUserExists(result.user);
+            }
+        }).catch((error) => {
+            console.error("Error during Google Sign-In:", error);
         });
 
         function checkUserExists(user) {
@@ -133,6 +134,13 @@
                     .catch((error) => {
                         console.error("Error saving user data:", error);
                     });
+            }
+        });
+
+        // Check if user is already signed in
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                checkUserExists(user);
             }
         });
     </script>
