@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login and Registration</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        .container {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        button {
+            background-color: #4285F4;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        #registration-form {
+            display: none;
+        }
+        input {
+            display: block;
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Login / Registration</h2>
+        <button id="google-signin">Sign in with Google</button>
+        <div id="registration-form">
+            <h3>Complete Registration</h3>
+            <input type="text" id="pseudo" placeholder="Pseudo" required>
+            <input type="text" id="age" placeholder="Age" required>
+            <input type="text" id="gender" placeholder="Gender" required>
+            <input type="text" id="location" placeholder="Location" required>
+            <input type="text" id="occupation" placeholder="Occupation" required>
+            <button id="complete-registration">Complete Registration</button>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyDI31r0NMh6gpAcpIYy9E7xyxlXWpfgfVo",
+            authDomain: "tobaya-acbcb.firebaseapp.com",
+            databaseURL: "https://tobaya-acbcb-default-rtdb.firebaseio.com",
+            projectId: "tobaya-acbcb",
+            storageBucket: "tobaya-acbcb.appspot.com",
+            messagingSenderId: "765759240895",
+            appId: "1:765759240895:web:ca082d7799b4cef067a40a",
+            measurementId: "G-CDZGJYHVYQ"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+
+        const auth = firebase.auth();
+        const database = firebase.database();
+
+        document.getElementById('google-signin').addEventListener('click', () => {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider)
+                .then((result) => {
+                    const user = result.user;
+                    checkUserExists(user);
+                })
+                .catch((error) => {
+                    console.error("Error during Google Sign-In:", error);
+                });
+        });
+
+        function checkUserExists(user) {
+            const userRef = database.ref('Pseudo/' + user.uid);
+            userRef.once('value')
+                .then((snapshot) => {
+                    if (snapshot.exists()) {
+                        // User exists, redirect to home page
+                        window.location.href = 'index.html';
+                    } else {
+                        // New user, show registration form
+                        document.getElementById('registration-form').style.display = 'block';
+                    }
+                })
+                .catch((error) => {
+                    console.error("Error checking user existence:", error);
+                });
+        }
+
+        document.getElementById('complete-registration').addEventListener('click', () => {
+            const user = auth.currentUser;
+            if (user) {
+                const userData = {
+                    pseudo: document.getElementById('pseudo').value,
+                    email: user.email,
+                    balance: 0,
+                    status: "Abonné",
+                    firstName: user.displayName ? user.displayName.split(' ')[0] : "",
+                    lastName: user.displayName ? user.displayName.split(' ')[1] : "",
+                    age: document.getElementById('age').value,
+                    gender: document.getElementById('gender').value,
+                    location: document.getElementById('location').value,
+                    occupation: document.getElementById('occupation').value,
+                    photoURL: user.photoURL || "",
+                    accountType: "Personal"
+                };
+
+                database.ref('Pseudo/' + user.uid).set(userData)
+                    .then(() => {
+                        window.location.href = 'index.html';
+                    })
+                    .catch((error) => {
+                        console.error("Error saving user data:", error);
+                    });
+            }
+        });
+    </script>
+</body>
+</html>
